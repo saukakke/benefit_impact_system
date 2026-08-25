@@ -1,0 +1,58 @@
+name: UCSI QA
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  static-and-api:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: ucsi_benefit_impact
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: pdo_mysql
+      - name: PHP syntax check
+        run: |
+          find backend -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+      - name: Initialise database
+        env:
+          MYSQL_PWD: root
+        run: mysql -h 127.0.0.1 -uroot ucsi_benefit_impact < database/schema.sql
+      - name: Start PHP server
+        env:
+          DB_USER: root
+          DB_PASS: root
+        run: php -S 127.0.0.1:8080 -t . >/tmp/ucsi-php.log 2>&1 &
+      - name: API smoke test
+        run: |
+          sleep 2
+          curl --fail --silent http://127.0.0.1:8080/backend/index.php
+      - name: Frontend source checks
+        run: |
+          test -f index.html
+          test -f frontend/index.html
+          test -f frontend/assets/css/app.css
+          test -f frontend/assets/js/app.js
+          grep -q "api/auth/login" frontend/assets/js/app.js
+          grep -q "api/beneficiaries" frontend/assets/js/app.js
+          grep -q "api/programmes" frontend/assets/js/app.js
+          grep -q "api/interventions" frontend/assets/js/app.js
+          grep -q "api/assessments" frontend/assets/js/app.js
+          grep -q "api/indicators" frontend/assets/js/app.js
+          grep -q "api/reports/impact" frontend/assets/js/app.js
