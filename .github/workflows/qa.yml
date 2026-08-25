@@ -29,7 +29,7 @@ jobs:
           extensions: pdo_mysql
       - name: PHP syntax check
         run: |
-          find backend -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+          find backend scripts -type f -name '*.php' -print0 2>/dev/null | xargs -0 -r -n1 php -l
       - name: Initialise database
         env:
           MYSQL_PWD: root
@@ -46,6 +46,7 @@ jobs:
         run: |
           sleep 2
           curl --fail --silent http://127.0.0.1:8080/backend/index.php
+          curl --fail --silent http://127.0.0.1:8080/backend/health.php
       - name: Frontend source checks
         run: |
           test -f index.html
@@ -59,3 +60,7 @@ jobs:
           grep -q "api/assessments" frontend/assets/js/app.js
           grep -q "api/indicators" frontend/assets/js/app.js
           grep -q "api/reports/impact" frontend/assets/js/app.js
+      - name: Shell syntax checks
+        run: |
+          bash -n scripts/backup-database.sh
+          bash -n scripts/verify-backup.sh
