@@ -1,10 +1,13 @@
 Options -Indexes
 RewriteEngine On
+
+<FilesMatch "^(?:\.env(?:\..*)?|.*\.(?:sql|log|ini|bak|conf|dist|example))$">
+    Require all denied
+</FilesMatch>
+
 RewriteCond %{REQUEST_FILENAME} -f [OR]
 RewriteCond %{REQUEST_FILENAME} -d
 RewriteRule ^ - [L]
 RewriteRule ^ index.php [L]
 
-<FilesMatch "\.(env|sql|log|ini|bak|conf)$">
-    Require all denied
-</FilesMatch>
+RewriteRule ^storage/uploads/.*\.(?:php|phtml|phar|cgi|pl|py|sh)$ - [F,L,NC]
