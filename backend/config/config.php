@@ -24,15 +24,20 @@ function envValue(string $key, ?string $default = null): ?string {
     return $value === false ? $default : $value;
 }
 
-if (APP_ENV === 'production') {
-    $required = ['DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER', 'DB_PASS'];
-    foreach ($required as $key) {
-        if (envValue($key) === null || envValue($key) === '') {
-            error_log("Missing required production environment variable: {$key}");
-            http_response_code(500);
-            exit('Application configuration error.');
-        }
+function requireEnvironment(array $keys): void {
+    $missing = [];
+    foreach ($keys as $key) {
+        if (envValue($key) === null || envValue($key) === '') $missing[] = $key;
     }
+    if ($missing) {
+        error_log('Missing required environment variables: ' . implode(', ', $missing));
+        http_response_code(500);
+        exit('Application configuration error.');
+    }
+}
+
+if (APP_ENV === 'production') {
+    requireEnvironment(['DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER', 'DB_PASS']);
 }
 
 if (session_status() !== PHP_SESSION_ACTIVE) {
