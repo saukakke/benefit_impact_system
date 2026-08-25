@@ -36,6 +36,9 @@ jobs:
         run: mysql -h 127.0.0.1 -uroot ucsi_benefit_impact < database/schema.sql
       - name: Start PHP server
         env:
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_NAME: ucsi_benefit_impact
           DB_USER: root
           DB_PASS: root
         run: php -S 127.0.0.1:8080 -t . >/tmp/ucsi-php.log 2>&1 &
