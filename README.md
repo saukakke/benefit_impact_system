@@ -2,6 +2,15 @@
 
 ## United Community Support Initiative (UCSI)
 
+[![PHP](https://img.shields.io/badge/PHP-8.x-777BB4?logo=php&logoColor=white)](https://www.php.net/)
+[![MySQL](https://img.shields.io/badge/MySQL-8.x-4479A1?logo=mysql&logoColor=white)](https://www.mysql.com/)
+[![HTML5](https://img.shields.io/badge/HTML5-E34F26?logo=html5&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/HTML)
+[![CSS3](https://img.shields.io/badge/CSS3-1572B6?logo=css3&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/CSS)
+[![JavaScript](https://img.shields.io/badge/JavaScript-ES6+-F7DF1E?logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
+[![Bootstrap](https://img.shields.io/badge/Bootstrap-5-7952B3?logo=bootstrap&logoColor=white)](https://getbootstrap.com/)
+[![GitHub](https://img.shields.io/badge/GitHub-main-181717?logo=github&logoColor=white)](https://github.com/saukakke/benefit_impact_system)
+[![License](https://img.shields.io/badge/License-Not%20Specified-lightgrey)](https://github.com/saukakke/benefit_impact_system)
+
 A web-based beneficiary management and impact tracking system designed for United Community Support Initiative (UCSI). The application centralises beneficiary records and connects them with programmes, interventions, enrolments, assessments, indicators and impact reporting.
 
 ## Project Overview
@@ -117,7 +126,7 @@ The application follows a practical layered web architecture:
                       │ PDO
                       ▼
 ┌──────────────────────────────────────────┐
-│                 MySQL                   │
+│                 MySQL                    │
 │ Beneficiaries · Programmes · Activities │
 │ Assessments · Indicators · Audit Logs    │
 └──────────────────────────────────────────┘
