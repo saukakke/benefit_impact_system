@@ -1,0 +1,7 @@
+.env
+.env.*
+*.log
+backend/storage/uploads/*
+!backend/storage/uploads/.gitkeep
+.DS_Store
+Thumbs.db
