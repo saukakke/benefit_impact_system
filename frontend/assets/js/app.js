@@ -206,3 +206,30 @@ window.addEventListener('DOMContentLoaded', () => {
   $('#refreshBtn')?.addEventListener('click', () => state.user && navigate());
   bootstrapApp();
 });
+
+
+// Phase 1 core-completeness actions
+async function editProgramme(id){
+ const p=(await api(`api/programmes/${id}`)).data;
+ const body=`${field('code','Programme code','text',true,p.code)}${field('name','Programme name','text',true,p.name)}<div class="mb-3"><label class="form-label">Description</label><textarea name="description" class="form-control" rows="3">${esc(p.description||'')}</textarea></div><div class="row g-3"><div class="col-md-6">${field('start_date','Start date','date',true,p.start_date)}</div><div class="col-md-6">${field('end_date','End date','date',false,p.end_date||'')}</div><div class="col-md-6">${field('budget','Budget','number',false,p.budget||0,'min="0" step="0.01"')}</div><div class="col-md-6">${selectField('status','Status',[['planned','Planned'],['active','Active'],['completed','Completed'],['suspended','Suspended']])}</div></div>`;
+ const el=showModal('programmeEdit','Edit programme',body,'Save changes',async e=>{e.preventDefault();try{await api(`api/programmes/${id}`,{method:'PUT',body:JSON.stringify(Object.fromEntries(new FormData(e.target).entries()))});bootstrap.Modal.getInstance(e.target.closest('.modal')).hide();toast('Programme updated.');navigate();}catch(x){toast(x.message,'error');}});
+ el.querySelector('[name=status]').value=p.status;
+}
+async function archiveProgramme(id){if(!confirm('Archive this programme?'))return;try{await api(`api/programmes/${id}`,{method:'DELETE',body:'{}'});toast('Programme archived.');navigate();}catch(e){toast(e.message,'error');}}
+async function editIntervention(id){
+ const x=(await api(`api/interventions/${id}`)).data;
+ const body=`${selectField('programme_id','Programme',state.programmes.map(p=>[p.id,p.code+' — '+p.name]),true)}${field('name','Name','text',true,x.name)}${field('intervention_type','Type','text',true,x.intervention_type)}${field('target_count','Target count','number',false,x.target_count,'min="0"')}<div class="row g-3"><div class="col-md-6">${field('start_date','Start date','date',true,x.start_date)}</div><div class="col-md-6">${field('end_date','End date','date',false,x.end_date||'')}</div></div>${selectField('status','Status',[['planned','Planned'],['active','Active'],['completed','Completed'],['cancelled','Cancelled']])}<div class="mb-3"><label class="form-label">Description</label><textarea name="description" class="form-control" rows="3">${esc(x.description||'')}</textarea></div>`;
+ const el=showModal('interventionEdit','Edit intervention',body,'Save changes',async e=>{e.preventDefault();try{await api(`api/interventions/${id}`,{method:'PUT',body:JSON.stringify(Object.fromEntries(new FormData(e.target).entries()))});bootstrap.Modal.getInstance(e.target.closest('.modal')).hide();toast('Intervention updated.');navigate();}catch(err){toast(err.message,'error');}});
+ el.querySelector('[name=programme_id]').value=x.programme_id;el.querySelector('[name=status]').value=x.status;
+}
+async function cancelIntervention(id){if(!confirm('Cancel this intervention?'))return;try{await api(`api/interventions/${id}`,{method:'DELETE',body:'{}'});toast('Intervention cancelled.');navigate();}catch(e){toast(e.message,'error');}}
+async function openIndicator(){
+ const body=`${selectField('programme_id','Programme',state.programmes.map(p=>[p.id,p.code+' — '+p.name]),true)}${field('name','Indicator name','text',true)}<div class="mb-3"><label class="form-label">Description</label><textarea name="description" class="form-control" rows="3"></textarea></div><div class="row g-3"><div class="col-md-6">${selectField('indicator_type','Type',[['output','Output'],['outcome','Outcome'],['impact','Impact']],true)}</div><div class="col-md-6">${field('unit','Unit','text',true)}</div><div class="col-md-6">${field('baseline','Baseline','number',false,'','step="0.0001"')}</div><div class="col-md-6">${field('target','Target','number',false,'','step="0.0001"')}</div></div>${selectField('frequency','Frequency',[['monthly','Monthly'],['quarterly','Quarterly'],['biannual','Biannual'],['annual','Annual'],['event','Event']],true)}`;
+ showModal('indicatorCreate','Create indicator',body,'Create indicator',async e=>{e.preventDefault();try{await api('api/indicators',{method:'POST',body:JSON.stringify(Object.fromEntries(new FormData(e.target).entries()))});bootstrap.Modal.getInstance(e.target.closest('.modal')).hide();toast('Indicator created.');navigate();}catch(err){toast(err.message,'error');}});
+}
+async function manageEnrollment(id){
+ const x=(await api(`api/enrollments/${id}`)).data;
+ const body=`<p><strong>${esc(x.beneficiary_name)}</strong> — ${esc(x.intervention_name)}</p>${selectField('status','Status',[['enrolled','Enrolled'],['completed','Completed'],['withdrawn','Withdrawn'],['referred','Referred']],true)}${field('exit_date','Exit date','date',false,x.exit_date||'')}${field('benefit_value','Benefit value','number',false,x.benefit_value||0,'min="0" step="0.01"')}<div class="mb-3"><label class="form-label">Notes</label><textarea name="notes" class="form-control" rows="3">${esc(x.notes||'')}</textarea></div>`;
+ const el=showModal('enrollmentManage','Manage enrolment',body,'Save changes',async e=>{e.preventDefault();try{await api(`api/enrollments/${id}`,{method:'PUT',body:JSON.stringify(Object.fromEntries(new FormData(e.target).entries()))});bootstrap.Modal.getInstance(e.target.closest('.modal')).hide();toast('Enrolment updated.');}catch(err){toast(err.message,'error');}});
+ el.querySelector('[name=status]').value=x.status;
+}
