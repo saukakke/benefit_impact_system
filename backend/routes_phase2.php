@@ -1,0 +1,38 @@
+<?php
+declare(strict_types=1);
+
+/* Phase 2: administration and account management. */
+if ($path === 'api/users' && $method === 'GET') {
+    requireRole(['admin']);
+    $s = Database::connection()->query("SELECT id,name,email,role,active,created_at,updated_at FROM users ORDER BY id DESC");
+    jsonResponse(['success'=>true,'data'=>$s->fetchAll()]);
+}
+if ($path === 'api/users' && $method === 'POST') {
+    $u = requireRole(['admin']); requireCsrf(); $d=input();
+    validateRequired($d,['name','email','password','role']);
+    validateEmail($d,'email'); validateEnum($d,'role',['admin','manager','field_officer','analyst','viewer']);
+    if (strlen((string)$d['password']) < 12) jsonResponse(['success'=>false,'message'=>'Password must be at least 12 characters'],422);
+    $db=Database::connection(); $s=$db->prepare('SELECT id FROM users WHERE email=? LIMIT 1');$s->execute([strtolower(trim($d['email']))]);
+    if($s->fetch()) jsonResponse(['success'=>false,'message'=>'Email already exists'],409);
+    $s=$db->prepare('INSERT INTO users(name,email,password_hash,role,active) VALUES(?,?,?,?,1)');
+    $s->execute([clean($d['name']),strtolower(trim($d['email'])),password_hash((string)$d['password'],PASSWORD_DEFAULT),$d['role']]);
+    $id=(int)$db->lastInsertId(); audit((int)$u['id'],'create','user',$id); jsonResponse(['success'=>true,'id'=>$id],201);
+}
+if (preg_match('#^api/users/(\\d+)$#',$path,$m) && $method === 'GET') {
+    requireRole(['admin']); $s=Database::connection()->prepare('SELECT id,name,email,role,active,created_at,updated_at FROM users WHERE id=?');$s->execute([(int)$m[1]]);$x=$s->fetch();if(!$x)jsonResponse(['success'=>false,'message'=>'User not found'],404);jsonResponse(['success'=>true,'data'=>$x]);
+}
+if (preg_match('#^api/users/(\\d+)$#',$path,$m) && $method === 'PUT') {
+    $u=requireRole(['admin']);requireCsrf();$id=(int)$m[1];$d=input();
+    if($id===(int)$u['id'] && isset($d['active']) && !(bool)$d['active']) jsonResponse(['success'=>false,'message'=>'You cannot deactivate your own account'],422);
+    $fields=['name','email','role','active'];$sets=[];$p=[];
+    if(isset($d['email']))validateEmail($d,'email');if(isset($d['role']))validateEnum($d,'role',['admin','manager','field_officer','analyst','viewer']);
+    foreach($fields as $f)if(array_key_exists($f,$d)){$sets[]="$f=?";$p[]=$f==='email'?strtolower(trim($d[$f])):$d[$f];}
+    if(isset($d['password'])){if(strlen((string)$d['password'])<12)jsonResponse(['success'=>false,'message'=>'Password must be at least 12 characters'],422);$sets[]='password_hash=?';$p[]=password_hash((string)$d['password'],PASSWORD_DEFAULT);}
+    if(!$sets)jsonResponse(['success'=>false,'message'=>'No fields supplied'],422);$p[]=$id;Database::connection()->prepare('UPDATE users SET '.implode(',',$sets).' WHERE id=?')->execute($p);audit((int)$u['id'],'update','user',$id);jsonResponse(['success'=>true,'message'=>'User updated']);
+}
+if (preg_match('#^api/users/(\\d+)/password$#',$path,$m) && $method === 'PUT') {
+    $u=requireAuth();requireCsrf();$id=(int)$m[1];if($id!==(int)$u['id'] && ($u['role']??'')!=='admin')jsonResponse(['success'=>false,'message'=>'Forbidden'],403);$d=input();validateRequired($d,['password']);if(strlen((string)$d['password'])<12)jsonResponse(['success'=>false,'message'=>'Password must be at least 12 characters'],422);$s=Database::connection()->prepare('UPDATE users SET password_hash=? WHERE id=?');$s->execute([password_hash((string)$d['password'],PASSWORD_DEFAULT),$id]);audit((int)$u['id'],'change_password','user',$id);jsonResponse(['success'=>true,'message'=>'Password changed']);
+}
+if (preg_match('#^api/users/(\\d+)$#',$path,$m) && $method === 'DELETE') {
+    $u=requireRole(['admin']);requireCsrf();$id=(int)$m[1];if($id===(int)$u['id'])jsonResponse(['success'=>false,'message'=>'You cannot deactivate your own account'],422);$s=Database::connection()->prepare('UPDATE users SET active=0 WHERE id=?');$s->execute([$id]);audit((int)$u['id'],'deactivate','user',$id);jsonResponse(['success'=>true,'message'=>'User deactivated']);
+}
