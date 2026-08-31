@@ -8,6 +8,7 @@ if ($base !== '' && str_starts_with($path, $base)) $path = trim(substr($path, st
 $method = $_SERVER['REQUEST_METHOD'];
 
 if ($path === '' || $path === 'index.php') jsonResponse(['success'=>true,'application'=>APP_NAME,'version'=>'1.0.0','csrf_token'=>csrfToken()]);
+require_once __DIR__ . '/routes_phase6.php';
 require_once __DIR__ . '/routes_phase5.php';
 require_once __DIR__ . '/routes_phase2.php';
 require_once __DIR__ . '/routes_phase4.php';
