@@ -67,4 +67,5 @@ if($path==='api/indicator-values' && $method==='POST') { $u=requireRole(['admin'
 
 if($path==='api/reports/impact' && $method==='GET') { requireAuth();$db=Database::connection();$s=$db->query("SELECT p.id,p.code,p.name,COUNT(DISTINCT bi.beneficiary_id) beneficiaries,COUNT(DISTINCT bi.id) interventions_completed,ROUND(AVG(a.overall_score),2) average_impact FROM programmes p LEFT JOIN interventions i ON i.programme_id=p.id LEFT JOIN beneficiary_interventions bi ON bi.intervention_id=i.id LEFT JOIN assessments a ON a.beneficiary_id=bi.beneficiary_id GROUP BY p.id,p.code,p.name ORDER BY p.name");jsonResponse(['success'=>true,'data'=>$s->fetchAll()]);}
 
+require_once __DIR__ . '/routes_phase1.php';
 jsonResponse(['success'=>false,'message'=>'Endpoint not found'],404);
